@@ -9,11 +9,21 @@ dotenv.config({ path: ".env.local", override: true });
 await ensureAuthStore();
 
 const app = express();
-const port = Number(process.env.API_PORT ?? 3001);
+const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
+const allowedOrigins = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(express.json());
 app.use((request, response, next) => {
-  response.setHeader("Access-Control-Allow-Origin", request.headers.origin ?? "*");
+  const requestOrigin = request.headers.origin;
+  const allowAnyOrigin = allowedOrigins.length === 0;
+  const allowedOrigin = allowAnyOrigin || (requestOrigin && allowedOrigins.includes(requestOrigin))
+    ? requestOrigin
+    : allowedOrigins[0];
+  response.setHeader("Access-Control-Allow-Origin", allowedOrigin ?? "*");
+  response.setHeader("Vary", "Origin");
   response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS");
   if (request.method === "OPTIONS") {

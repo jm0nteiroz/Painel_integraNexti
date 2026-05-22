@@ -48,6 +48,57 @@ npm run dev:api
 npm run dev:web
 ```
 
+## Publicar a API no Render
+
+O repositório possui um `render.yaml` para facilitar o deploy da API Express.
+
+No Render:
+
+1. Crie um novo **Web Service**.
+2. Conecte este repositório do GitHub.
+3. Use:
+   - Build Command: `npm install`
+   - Start Command: `npm run start:api`
+4. Configure as variáveis de ambiente:
+
+```env
+DB_HOST=ip-ou-host-do-sql-server
+DB_PORT=1433
+DB_NAME=nome_do_banco
+DB_USER=usuario
+DB_PASSWORD=senha
+DB_ENCRYPT=false
+DB_TRUST_SERVER_CERTIFICATE=true
+CORS_ORIGIN=https://url-do-painel-na-vercel.vercel.app
+ADMIN_EMAIL=admin@maxsystem.com.br
+ADMIN_INITIAL_PASSWORD=senha-inicial-segura
+```
+
+O Render define a variável `PORT` automaticamente. A API usa `PORT` em produção e `API_PORT` somente para desenvolvimento local.
+
+Depois do deploy, teste:
+
+```text
+https://sua-api.onrender.com/api/health
+```
+
+Essa rota exige sessão nas rotas `/api`, então para testar fluxo real use o login do painel apontando para a URL da API.
+
+## Publicar o frontend na Vercel
+
+No Vercel use:
+
+- Framework Preset: `Vite`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
+Configure:
+
+```env
+VITE_API_BASE_URL=https://sua-api.onrender.com
+VITE_USE_MOCKS=false
+```
+
 Login inicial de desenvolvimento:
 
 - Email: `admin@maxsystem.com.br`

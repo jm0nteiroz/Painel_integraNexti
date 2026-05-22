@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: painel-integranexti-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start:api
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "1433"
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_ENCRYPT
+        value: "false"
+      - key: DB_TRUST_SERVER_CERTIFICATE
+        value: "true"
+      - key: CORS_ORIGIN
+        sync: false
+      - key: ADMIN_EMAIL
+        value: admin@maxsystem.com.br
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false
