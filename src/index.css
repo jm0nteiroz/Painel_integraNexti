@@ -1,0 +1,383 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-ink: #f4f8f7;
+  --color-muted: #aeb9b8;
+  --color-surface: #15120f;
+  --color-brand: #69c83a;
+  --color-accent: #0aa66a;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root.light-mode {
+  --color-ink: #1f1d1a;
+  --color-muted: #66625d;
+  --color-surface: #fafaf8;
+  --color-brand: #65bf35;
+  --color-accent: #0aa66a;
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 82% 12%, rgb(70 112 43 / 0.12), transparent 28rem),
+    linear-gradient(135deg, #15120f 0%, #1d1915 52%, #15120f 100%);
+}
+
+:root.light-mode body {
+  background:
+    radial-gradient(circle at 82% 12%, rgb(101 191 53 / 0.08), transparent 28rem),
+    linear-gradient(135deg, #fafaf8 0%, #f6f6f3 52%, #ffffff 100%);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+[role="menuitem"] {
+  transform: translateY(0) scale(1);
+  transition:
+    transform 120ms ease,
+    opacity 160ms ease,
+    filter 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+button:active,
+[role="menuitem"]:active {
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(1.08);
+}
+
+button.click-locked,
+[role="menuitem"].click-locked {
+  cursor: wait !important;
+  opacity: 0.68;
+  pointer-events: none;
+  transform: translateY(1px) scale(0.98);
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.maxsystem-watermark {
+  position: fixed;
+  inset: auto -130px -150px auto;
+  width: min(760px, 70vw);
+  opacity: 0.045;
+  pointer-events: none;
+  z-index: 0;
+  filter: grayscale(1) brightness(1.7);
+}
+
+.bg-white,
+.bg-white\/95,
+.bg-white\/80 {
+  background-color: rgb(31 40 44 / 0.82);
+}
+
+.bg-slate-50,
+.bg-sky-50,
+.bg-slate-50\/70,
+.bg-sky-50\/60 {
+  background-color: rgb(23 31 35 / 0.72);
+}
+
+.hover\:bg-slate-50\/70:hover,
+.hover\:bg-slate-100:hover,
+.hover\:bg-green-50:hover {
+  background-color: rgb(47 59 63 / 0.86);
+}
+
+tbody tr:hover {
+  background-color: rgb(47 59 63 / 0.86) !important;
+}
+
+.data-table-card {
+  color: var(--color-ink);
+}
+
+.data-table thead {
+  background-color: rgb(23 31 35 / 0.72);
+}
+
+.data-table tbody tr {
+  background-color: transparent;
+}
+
+.data-table td {
+  color: var(--color-muted);
+}
+
+.data-table th {
+  color: var(--color-muted);
+}
+
+.data-table button {
+  color: var(--color-muted);
+}
+
+.data-table button:hover {
+  color: var(--color-brand);
+}
+
+button:hover,
+select:hover,
+input:hover {
+  color: var(--color-ink);
+}
+
+.border-slate-200,
+.border-slate-100,
+.border-sky-100,
+.border-slate-300 {
+  border-color: rgb(104 119 123 / 0.38);
+}
+
+.text-slate-600,
+.text-muted {
+  color: var(--color-muted);
+}
+
+input,
+select,
+textarea {
+  background-color: rgb(20 28 32 / 0.9);
+  color: var(--color-ink);
+  border-color: rgb(104 119 123 / 0.58);
+}
+
+option {
+  background-color: #172025;
+  color: var(--color-ink);
+}
+
+.bg-surface {
+  background:
+    radial-gradient(circle at 82% 12%, rgb(70 112 43 / 0.12), transparent 28rem),
+    linear-gradient(135deg, #15120f 0%, #1d1915 52%, #15120f 100%);
+}
+
+:root.light-mode .bg-surface {
+  background:
+    radial-gradient(circle at 82% 12%, rgb(101 191 53 / 0.08), transparent 28rem),
+    linear-gradient(135deg, #fafaf8 0%, #f6f6f3 52%, #ffffff 100%);
+}
+
+:root.light-mode .bg-\[\#1b1815\]\/95,
+:root.light-mode .bg-\[\#1b1815\] {
+  background-color: rgb(255 255 255 / 0.96);
+}
+
+:root.light-mode .bg-\[\#121a1d\]\/95,
+:root.light-mode .bg-\[\#121a1d\] {
+  background-color: rgb(255 255 255 / 0.95);
+}
+
+:root.light-mode .bg-\[\#172224\] {
+  background-color: #ffffff;
+}
+
+:root.light-mode .bg-white,
+:root.light-mode .bg-white\/95,
+:root.light-mode .bg-white\/80 {
+  background-color: rgb(255 255 255 / 0.88);
+}
+
+:root.light-mode .bg-slate-50,
+:root.light-mode .bg-sky-50,
+:root.light-mode .bg-slate-50\/70,
+:root.light-mode .bg-sky-50\/60 {
+  background-color: rgb(244 248 249 / 0.88);
+}
+
+:root.light-mode input,
+:root.light-mode select,
+:root.light-mode textarea {
+  background-color: rgb(255 255 255 / 0.94);
+  color: var(--color-ink);
+  border-color: rgb(148 163 184 / 0.58);
+}
+
+:root.light-mode option {
+  background-color: #ffffff;
+  color: var(--color-ink);
+}
+
+:root.light-mode .text-slate-100,
+:root.light-mode .text-slate-300,
+:root.light-mode .text-slate-400 {
+  color: var(--color-ink);
+}
+
+:root.light-mode .text-rose-200 {
+  color: #dc2626;
+}
+
+:root.light-mode .focus\:text-rose-100:focus {
+  color: #b91c1c;
+}
+
+:root.light-mode .hover\:text-slate-100:hover {
+  color: var(--color-ink);
+}
+
+:root.light-mode .hover\:bg-white\/10:hover {
+  background-color: rgb(15 23 42 / 0.06);
+}
+
+:root.light-mode tbody tr:hover {
+  background-color: rgb(244 252 240 / 0.96) !important;
+}
+
+:root.light-mode .data-table-card {
+  background-color: rgb(255 255 255 / 0.96);
+  border-color: rgb(31 41 55 / 0.18);
+  box-shadow: 0 18px 45px rgb(31 41 55 / 0.12);
+}
+
+:root.light-mode .data-table thead {
+  background-color: #f7faf7;
+}
+
+:root.light-mode .data-table tbody {
+  background-color: #ffffff;
+}
+
+:root.light-mode .data-table tbody tr {
+  border-color: rgb(31 41 55 / 0.09);
+}
+
+:root.light-mode .data-table td {
+  color: #4b5563;
+}
+
+:root.light-mode .data-table th {
+  color: #5f5a54;
+}
+
+:root.light-mode .data-table .font-mono {
+  color: #59636e;
+}
+
+:root.light-mode .data-table button {
+  color: #5f5a54;
+}
+
+:root.light-mode .data-table button:hover {
+  background-color: #eef8e9;
+  color: #3d8f1d;
+}
+
+:root.light-mode .routine-delay-alert {
+  border-color: rgb(217 119 6 / 0.42);
+  background-color: rgb(255 247 237 / 0.92);
+  color: #92400e;
+}
+
+:root.light-mode .routine-delay-alert svg {
+  color: #d97706;
+}
+
+:root.light-mode .border-slate-700,
+:root.light-mode .border-slate-800 {
+  border-color: rgb(148 163 184 / 0.42);
+}
+
+:root.light-mode button.border-slate-600,
+:root.light-mode .border-slate-600 {
+  border-color: rgb(148 163 184 / 0.65);
+}
+
+:root.light-mode .bg-slate-900\/45 {
+  background-color: rgb(255 255 255 / 0.86);
+}
+
+:root.light-mode .hover\:bg-slate-800\/80:hover {
+  background-color: rgb(241 245 249 / 0.95);
+}
+
+:root.light-mode .portal-sidebar,
+:root.light-mode .portal-topbar {
+  border-color: rgb(30 30 30 / 0.12);
+  background-color: rgb(255 255 255 / 0.96);
+}
+
+:root.light-mode .portal-sidebar .text-slate-100,
+:root.light-mode .portal-sidebar .text-slate-200,
+:root.light-mode .portal-topbar .text-slate-100,
+:root.light-mode .portal-topbar .text-slate-200 {
+  color: #1f1d1a;
+}
+
+:root.light-mode .portal-sidebar .text-slate-300,
+:root.light-mode .portal-sidebar .text-slate-400,
+:root.light-mode .portal-topbar .text-slate-300,
+:root.light-mode .portal-topbar .text-slate-400 {
+  color: #66625d;
+}
+
+:root.light-mode .portal-sidebar .text-slate-500 {
+  color: #77716b;
+}
+
+:root.light-mode .portal-icon-button,
+:root.light-mode .portal-theme-button,
+:root.light-mode .portal-user-trigger {
+  color: #1f1d1a;
+}
+
+:root.light-mode .portal-theme-button {
+  background-color: #dff7d3;
+  color: #245b10;
+}
+
+:root:not(.light-mode) .portal-theme-button {
+  color: #ffffff;
+}
+
+:root.light-mode .portal-status-pill {
+  background-color: #ffffff;
+  color: #4a9e23;
+}
+
+:root.light-mode .portal-sidebar .bg-\[\#1f4f06\],
+:root.light-mode .portal-user-trigger .bg-\[\#1f4f06\] {
+  background-color: #d9f4cb;
+  color: #245b10;
+}
+
+:root.light-mode .portal-sidebar .text-\[\#a7f26f\],
+:root.light-mode .portal-user-trigger .text-\[\#a7f26f\] {
+  color: #245b10;
+}
+
+:root.light-mode [data-radix-popper-content-wrapper] .bg-\[\#172224\] {
+  background-color: #ffffff;
+}
+
+:root.light-mode .maxsystem-watermark {
+  opacity: 0.035;
+  filter: grayscale(1) brightness(0.75);
+}
+
+.shadow-sm,
+.shadow-panel {
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.2);
+}

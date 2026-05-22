@@ -1,0 +1,37 @@
+import type { IntegrationOperationSpec } from "../types";
+
+export const msNextiBaseUrl = "http://18.231.38.41/MsNexti";
+
+export const msNextiOperations: IntegrationOperationSpec[] = [
+  { method: "POST", path: "/rest/pwscargo", operationId: "cargos", entity: "Cargos", requestSchema: "rest_pwscargo_body" },
+  { method: "POST", path: "/rest/pwsbairro", operationId: "bairros", entity: "Bairros", requestSchema: "rest_pwsbairro_body" },
+  { method: "POST", path: "/rest/pwscidade", operationId: "cidades", entity: "Cidades", requestSchema: "rest_pwscidade_body" },
+  { method: "POST", path: "/rest/pwsempresa", operationId: "empresas", entity: "Empresas", requestSchema: "rest_pwsempresa_body" },
+  { method: "POST", path: "/rest/pwsunidadenegocio", operationId: "Unidade Negócio", entity: "Unidade Negócio", requestSchema: "rest_pwsunidadenegocio_body" },
+  { method: "POST", path: "/rest/pwsescala", operationId: "Escalas", entity: "Escalas", requestSchema: "rest_pwsescala_body" },
+  { method: "POST", path: "/rest/pWsEscalaProtheus", operationId: "Escalas - Protheus", entity: "Escalas - Protheus", requestSchema: "rest_pWsEscalaProtheus_body" },
+  { method: "POST", path: "/rest/pwsHorario", operationId: "Horários", entity: "Horários", requestSchema: "rest_pwsHorario_body" },
+  { method: "POST", path: "/rest/pwsHorarioEscala", operationId: "Horários Escala", entity: "Horários Escala", requestSchema: "rest_pwsHorarioEscala_body" },
+  { method: "POST", path: "/rest/pwssindicato", operationId: "Sindicatos", entity: "Sindicatos", requestSchema: "rest_pwssindicato_body" },
+  { method: "POST", path: "/rest/pwsturma", operationId: "Turmas", entity: "Turmas", requestSchema: "rest_pwsturma_body" },
+  { method: "POST", path: "/rest/pwsturmaProtheus", operationId: "Turmas - Protheus", entity: "Turmas - Protheus", requestSchema: "rest_pwsturmaProtheus_body" },
+  { method: "POST", path: "/rest/pwsPostoTrabalho", operationId: "Postos de Trabalho", entity: "Postos de Trabalho", requestSchema: "rest_pwsPostoTrabalho_body" },
+  { method: "POST", path: "/rest/pwsTomador", operationId: "Tomadores", entity: "Tomadores", requestSchema: "rest_pwsTomador_body" },
+  { method: "POST", path: "/rest/pwsColaborador", operationId: "Colaboradores", entity: "Colaboradores", requestSchema: "rest_pwsColaborador_body" },
+  { method: "POST", path: "/rest/pWsCaracteristicaPosto", operationId: "Caracteristica Postos", entity: "Caracteristica Postos", requestSchema: "rest_pWsCaracteristicaPosto_body" },
+  { method: "POST", path: "/rest/pWsTrocaEscalaNexti", operationId: "Troca Escala", entity: "Troca Escala", requestSchema: "rest_pWsTrocaEscalaNexti_body" },
+  { method: "POST", path: "/rest/pWsTrocaPostoNexti", operationId: "Troca Posto", entity: "Troca Posto", requestSchema: "rest_pWsTrocaPostoNexti_body" },
+  { method: "POST", path: "/rest/pwsListaAusencia", operationId: "Lista Ausencia", entity: "Lista Ausência", requestSchema: "rest_pwsListaAusencia_body" },
+  { method: "POST", path: "/rest/pwsColaboradorPro", operationId: "Colaborador - Protheus", entity: "Colaborador - Protheus", requestSchema: "rest_pwsColaboradorPro_body" },
+  { method: "POST", path: "/rest/pwsDependentesPro", operationId: "Dependentes - Protheus", entity: "Dependentes - Protheus", requestSchema: "rest_pwsDependentesPro_body" },
+  { method: "POST", path: "/rest/pWsSituacoes", operationId: "Situações", entity: "Situações", requestSchema: "rest_pWsSituacoes_body" },
+  { method: "POST", path: "/rest/pWsHistSindicatoPro", operationId: "Histórico Sindicato - Protheus", entity: "Histórico Sindicato - Protheus", requestSchema: "rest_pWsHistSindicatoPro_body" },
+  { method: "POST", path: "/rest/pWsListaAusenciaPro", operationId: "Lista Ausência - Protheus", entity: "Lista Ausência - Protheus", requestSchema: "rest_pWsListaAusenciaPro_body" },
+  { method: "POST", path: "/rest/pWsPostoTrabalhoCarac", operationId: "Posto Trabalho e Caracteristica - Protheus", entity: "Posto Trabalho e Caracteristica - Protheus", requestSchema: "rest_pWsPostoTrabalhoCarac_body" },
+  { method: "POST", path: "/rest/pWsTomadorProtheus", operationId: "Tomador - Protheus", entity: "Tomador - Protheus", requestSchema: "rest_pWsTomadorProtheus_body" },
+  { method: "POST", path: "/rest/pWsHorarioProtheus", operationId: "Horários - Protheus", entity: "Horários - Protheus", requestSchema: "rest_pWsHorarioProtheus_body" },
+  { method: "POST", path: "/rest/pwsHorarioEscalaProtheus", operationId: "Horários Escalas - Protheus", entity: "Horários Escalas - Protheus", requestSchema: "rest_pwsHorarioEscalaProtheus_body" },
+  { method: "POST", path: "/rest/pwsMarcacoesHorariosProtheus", operationId: "Marcação Horários - Protheus", entity: "Marcação Horários - Protheus", requestSchema: "rest_pwsMarcacoesHorariosProtheus_body" },
+  { method: "POST", path: "/MsNexti/rest/pWsTrocaPostoProtheus", operationId: "Troca Posto - Protheus", entity: "Troca Posto - Protheus", requestSchema: "rest_pWsTrocaPostoProtheus_body" },
+  { method: "POST", path: "/rest/pwsTrocaEscala", operationId: "Troca Escala - Protheus", entity: "Troca Escala - Protheus", requestSchema: "rest_pwsTrocaEscala_body" },
+];
