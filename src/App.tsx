@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, Database, PanelLeft, Percent, RefreshCcw } from "lucide-react";
 import { AppSidebar } from "./components/AppSidebar";
 import { EntitySummaryPanel } from "./components/EntitySummaryPanel";
@@ -53,12 +53,25 @@ export function App() {
   const [page, setPage] = useState(1);
   const [selectedLog, setSelectedLog] = useState<IntegrationLog | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const loadingRequests = useRef(0);
+
+  const trackLoading = async <T,>(task: () => Promise<T>) => {
+    loadingRequests.current += 1;
+    setDataLoading(true);
+    try {
+      return await task();
+    } finally {
+      loadingRequests.current = Math.max(loadingRequests.current - 1, 0);
+      if (loadingRequests.current === 0) setDataLoading(false);
+    }
+  };
 
   const loadDatabaseData = async () => {
     if (!selectedDatabase || !user) return;
-    try {
+    return trackLoading(async () => {
       const [loadedLogs, loadedExecutions, loadedEntities, loadedRoutines] = await Promise.all([
         activeLogRepository.listLogs(selectedDatabase),
         activeLogRepository.listExecutions(selectedDatabase),
@@ -70,19 +83,19 @@ export function App() {
       setEntities(loadedEntities);
       setRoutines(loadedRoutines);
       setLoadError(null);
-    } catch (error) {
+    }).catch((error) => {
       setLoadError(error instanceof Error ? error.message : "Falha ao carregar dados reais.");
-    }
+    });
   };
 
   const loadStats = async () => {
     if (!selectedDatabase || !user) return;
-    try {
+    return trackLoading(async () => {
       setStats(await activeLogRepository.listStats(selectedDatabase, filters));
       setLoadError(null);
-    } catch (error) {
+    }).catch((error) => {
       setLoadError(error instanceof Error ? error.message : "Falha ao carregar totais reais.");
-    }
+    });
   };
 
   const refreshAll = async () => {
@@ -429,7 +442,13 @@ export function App() {
                 <p className="text-xs text-muted">{formatNumber(activeRoutineCount)} de {formatNumber(routines.length)} rotinas liberadas estão ativas.</p>
               </div>
             </div>
-            <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-ink">
+            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+              routineStatus === "ok"
+                ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-700"
+                : routineStatus === "critical"
+                  ? "border-rose-400/40 bg-rose-500/15 text-rose-700"
+                  : "border-amber-400/40 bg-amber-500/15 text-amber-700"
+            }`}>
               {routineStatus === "ok" ? "Tudo ativo" : routineStatus === "critical" ? "Mais da metade desativada" : "Atenção"}
             </span>
           </div>
@@ -488,6 +507,7 @@ export function App() {
       </main>
 
       <LogDetailDrawer log={selectedLog} user={user} onUpdateNextiId={updateNextiId} onClose={() => setSelectedLog(null)} />
+      {dataLoading ? <LoadingOverlay /> : null}
       <ZohoSalesIQ enabled={user.role === "client"} />
       </div>
     </div>
@@ -496,4 +516,15 @@ export function App() {
 
 function latestValue<T>(values: T[]) {
   return values.length ? values[values.length - 1] : null;
+}
+
+function LoadingOverlay() {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 backdrop-blur-md">
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/10 px-8 py-7 shadow-panel">
+        <img src="/assets/maxsystem.avif" alt="Maxsystem" className="h-16 w-auto animate-pulse object-contain" />
+        <p className="animate-pulse text-sm font-semibold text-slate-100">Carregando dados...</p>
+      </div>
+    </div>
+  );
 }
