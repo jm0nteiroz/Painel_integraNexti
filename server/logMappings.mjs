@@ -2,7 +2,7 @@ export const integrationMappings = [
   {
     baseEntity: "Cargos",
     source: "senior",
-    entity: "Cargos",
+    entity: "Cargo",
     table: "dbo.Cargo",
     sourceColumns: ["CargoExternalId", "CargoId", "CargoName"],
     nextiColumn: "CargoIdNexti",
@@ -13,7 +13,7 @@ export const integrationMappings = [
   {
     baseEntity: "Empresas",
     source: "neutral",
-    entity: "Empresas",
+    entity: "Empresa",
     table: "dbo.Empresa",
     sourceColumns: ["EmpresaExternalId", "EmpresaId", "EmpresaNome"],
     nextiColumn: "EmpresaIdNexti",
@@ -24,7 +24,7 @@ export const integrationMappings = [
   {
     baseEntity: "Escalas",
     source: "protheus",
-    entity: "Escalas - Protheus",
+    entity: "Escalas",
     table: "dbo.EscalasProtheus",
     sourceColumns: ["epp_ExternalId", "epp_codesc", "epp_nomesc"],
     nextiColumn: "epp_IdNexti",
@@ -58,7 +58,7 @@ export const integrationMappings = [
   {
     baseEntity: "Sindicatos",
     source: "senior",
-    entity: "Sindicatos",
+    entity: "Sindicato",
     table: "dbo.Sindicato",
     sourceColumns: ["Sindicato_IdNexti"],
     nextiColumn: "Sindicato_IdNexti",
@@ -69,7 +69,7 @@ export const integrationMappings = [
   {
     baseEntity: "Turmas",
     source: "protheus",
-    entity: "Turmas - Protheus",
+    entity: "Turma",
     table: "dbo.TurmaProtheus",
     sourceColumns: ["TurP_ExternalId", "TurP_codtma", "TurP_dessim"],
     nextiColumn: "TurP_IdNexti",
@@ -78,9 +78,9 @@ export const integrationMappings = [
     actionErrorColumn: "TurP_AcaoErro",
   },
   {
-    baseEntity: "Posto Trabalho e Caracteristica",
+    baseEntity: "Posto de Trabalho",
     source: "protheus",
-    entity: "Posto Trabalho e Caracteristica - Protheus",
+    entity: "Posto de Trabalho",
     table: "dbo.PostoTrabalhoCarac",
     sourceColumns: ["ptc_IdNexti"],
     nextiColumn: "ptc_IdNexti",
@@ -158,7 +158,7 @@ export const integrationMappings = [
   {
     baseEntity: "Tomador",
     source: "protheus",
-    entity: "Tomador - Protheus",
+    entity: "Tomador",
     table: "dbo.TomadorProtheus",
     sourceColumns: ["TOMP_ExternalID", "TOMP_codoem", "TOMP_nomoem"],
     nextiColumn: "TOMP_idnexti",
@@ -203,7 +203,7 @@ export const integrationMappings = [
   {
     baseEntity: "Unidade Negócio",
     source: "senior",
-    entity: "Unidade Negócio",
+    entity: "Unidade de Negócios",
     table: "dbo.UnidadeNegSenior",
     sourceColumns: ["UniNegSen_ExId", "UniNegSen_Cod", "UniNegSen_Nom"],
     nextiColumn: "UniNegSen_IdNexti",

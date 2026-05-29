@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Save, UserPlus } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import type { AuthUser, ClientRecord, DatabaseInfo, UserRole } from "../types";
+import type { AuthUser, ClientRecord, DatabaseInfo, RoutineInfo, UserRole } from "../types";
 import { authService } from "../services/authService";
 
 const emptyForm = {
@@ -15,9 +16,10 @@ const emptyForm = {
   role: "client" as UserRole,
   active: true,
   databaseNames: [] as string[],
+  routinePrograms: [] as string[],
 };
 
-export function UserManagementPage({ databases }: { databases: DatabaseInfo[] }) {
+export function UserManagementPage({ databases, routines }: { databases: DatabaseInfo[]; routines: RoutineInfo[] }) {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState(emptyForm);
@@ -46,6 +48,7 @@ export function UserManagementPage({ databases }: { databases: DatabaseInfo[] })
           role: form.role,
           active: form.active,
           databaseNames: form.role === "admin" ? [] : form.databaseNames,
+          routinePrograms: form.role === "admin" ? [] : form.routinePrograms,
         });
         setMessage("Usuário atualizado.");
       } else {
@@ -56,6 +59,7 @@ export function UserManagementPage({ databases }: { databases: DatabaseInfo[] })
           role: form.role,
           active: form.active,
           databaseNames: form.role === "admin" ? [] : form.databaseNames,
+          routinePrograms: form.role === "admin" ? [] : form.routinePrograms,
         });
         setMessage("Usuário criado.");
       }
@@ -76,6 +80,7 @@ export function UserManagementPage({ databases }: { databases: DatabaseInfo[] })
       role: user.role,
       active: user.active,
       databaseNames: user.databaseNames,
+      routinePrograms: user.routinePrograms ?? [],
     });
     setShowForm(true);
   };
@@ -98,7 +103,7 @@ export function UserManagementPage({ databases }: { databases: DatabaseInfo[] })
             <Field label="Email"><Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /></Field>
             <Field label={form.id ? "Nova senha (opcional)" : "Senha inicial"}><Input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required={!form.id} /></Field>
             <Field label="Perfil">
-              <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as UserRole, databaseNames: event.target.value === "admin" ? [] : form.databaseNames })} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-ink">
+              <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as UserRole, databaseNames: event.target.value === "admin" ? [] : form.databaseNames, routinePrograms: event.target.value === "admin" ? [] : form.routinePrograms })} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-ink">
                 <option value="client">Cliente</option>
                 <option value="admin">Admin Maxsystem</option>
               </select>
@@ -150,6 +155,32 @@ export function UserManagementPage({ databases }: { databases: DatabaseInfo[] })
                     </label>
                   ))}
                 </div>
+                {routines.length ? (
+                  <>
+                    <p className="mb-2 mt-4 text-xs font-medium text-muted">Serviços visíveis para o cliente</p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {routines.map((routine) => {
+                        const key = normalizeRoutineKey(routine.program);
+                        return (
+                          <label key={`${routine.id}-${key}`} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/70 p-2 text-sm text-ink">
+                            <input
+                              type="checkbox"
+                              checked={form.routinePrograms.includes(key)}
+                              onChange={(event) => {
+                                const next = event.target.checked
+                                  ? [...form.routinePrograms, key]
+                                  : form.routinePrograms.filter((program) => program !== key);
+                                setForm({ ...form, routinePrograms: next });
+                              }}
+                              className="size-4 accent-cyan-400"
+                            />
+                            {routine.name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : null}
               </div>
             ) : null}
             <div className="flex gap-2 lg:col-span-2">
@@ -176,6 +207,7 @@ export function UserManagementPage({ databases }: { databases: DatabaseInfo[] })
                   <p className="font-semibold text-ink">{user.name} <span className="text-xs text-muted">({user.role === "admin" ? "Admin" : "Cliente"})</span></p>
                   <p className="text-sm text-muted">{user.email}</p>
                   <p className="text-xs text-muted">{user.role === "admin" ? "Maxsystem" : user.databaseNames.join(", ") || "Sem bancos"}</p>
+                  {user.role === "client" ? <p className="text-xs text-muted">{user.routinePrograms?.length ? `${user.routinePrograms.length} serviços liberados` : "Todos os serviços liberados"}</p> : null}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`rounded-full px-2 py-1 text-xs font-semibold ${user.active ? "bg-emerald-500/15 text-emerald-200" : "bg-rose-500/15 text-rose-200"}`}>{user.active ? "Ativo" : "Inativo"}</span>
@@ -193,6 +225,10 @@ export function UserManagementPage({ databases }: { databases: DatabaseInfo[] })
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return <Label className="space-y-2">{label}{children}</Label>;
+}
+
+function normalizeRoutineKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }

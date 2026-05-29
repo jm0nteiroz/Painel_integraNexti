@@ -8,6 +8,10 @@ import { msNextiOperations } from "./msNextiOperations.mjs";
 dotenv.config({ path: ".env.local", override: true });
 await ensureAuthStore();
 
+const sqlTimezoneOffset = process.env.SQL_TIMEZONE_OFFSET ?? "-03:00";
+const forcedVisibleBaseEntities = new Set(["Cargos", "Sindicatos", "Unidade Negócio"]);
+const hiddenBaseEntities = new Set(["Horários Escala", "Marcação Horários"]);
+
 const app = express();
 const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
 const allowedOrigins = (process.env.CORS_ORIGIN ?? "")
@@ -234,9 +238,17 @@ app.get("/api/routines", async (request, response) => {
       order by confrot_prg
     `);
 
-    response.json(result.recordset
+    const normalizedRoutines = result.recordset
       .filter((routine) => !isEngibrasDatabase(database) || normalizeRoutineKey(routine.confrot_prg) !== "penviacaracteristicapostos")
-      .map((routine) => normalizeRoutine(routine, lastRunByProgram, database)));
+      .map((routine) => normalizeRoutine(routine, lastRunByProgram, database));
+
+    const allowedRoutinePrograms = request.user.role === "client"
+      ? new Set((request.user.routinePrograms ?? []).map(normalizeRoutineKey).filter(Boolean))
+      : null;
+
+    response.json(allowedRoutinePrograms?.size
+      ? normalizedRoutines.filter((routine) => allowedRoutinePrograms.has(normalizeRoutineKey(routine.program)))
+      : normalizedRoutines);
   } catch (error) {
     sendError(response, error);
   }
@@ -351,6 +363,49 @@ app.post("/api/logs/reprocess", async (request, response) => {
         update ${mapping.table}
         set [${mapping.errorColumn}] = null,
             [${mapping.actionErrorColumn}] = null
+        where convert(nvarchar(max), [${sourceColumn}]) = @sourceId
+      `);
+
+    response.json({ ok: true, affectedRows: result.rowsAffected?.[0] ?? 0 });
+  } catch (error) {
+    sendError(response, error);
+  }
+});
+
+app.put("/api/logs/nexti-id", requireAdmin, async (request, response) => {
+  try {
+    const database = await resolveDatabase(request.body?.database);
+    assertDatabaseAccess(request.user, database);
+    const nextiId = cleanValue(request.body?.nextiId);
+    const log = request.body?.log;
+    const payload = log?.payload ?? {};
+    const sourceTable = cleanValue(payload.sourceTable);
+    const sourceColumn = cleanValue(payload.sourceColumn);
+    const sourceId = cleanValue(payload.sourceId);
+    const mapping = integrationMappings.find((item) =>
+      item.table === sourceTable
+      && item.sourceColumns.includes(sourceColumn)
+      && item.nextiColumn
+    );
+
+    if (!mapping || !sourceColumn || !sourceId || !nextiId || !/^\d+$/.test(nextiId)) {
+      response.status(400).json({ message: "Dados inválidos para atualizar ID Nexti." });
+      return;
+    }
+
+    const pool = await getPoolForDatabase(database);
+    const tableExists = await filterExistingMappings(pool, [mapping]);
+    if (!tableExists.length) {
+      response.status(400).json({ message: "Tabela do log não encontrada no banco selecionado." });
+      return;
+    }
+
+    const result = await pool.request()
+      .input("sourceId", sql.NVarChar, sourceId)
+      .input("nextiId", sql.NVarChar, nextiId)
+      .query(`
+        update ${mapping.table}
+        set [${mapping.nextiColumn}] = @nextiId
         where convert(nvarchar(max), [${sourceColumn}]) = @sourceId
       `);
 
@@ -710,10 +765,10 @@ function getFirstValue(row, columns) {
 function getFirstDate(row, columns) {
   for (const column of columns) {
     const value = row[column];
-    if (value instanceof Date) return value.toISOString();
+    if (value instanceof Date) return dateToIso(value) ?? value.toISOString();
     if (value) {
       const date = new Date(value);
-      if (!Number.isNaN(date.getTime()) && date.getFullYear() > 1900) return date.toISOString();
+      if (!Number.isNaN(date.getTime()) && date.getFullYear() > 1900) return dateToIso(date) ?? date.toISOString();
     }
   }
   return null;
@@ -856,6 +911,36 @@ function normalizeRoutineKey(value) {
 
 function dateToIso(value) {
   if (!(value instanceof Date) || value.getUTCFullYear() <= 1900) return null;
+  return formatSqlClockFromDate(value);
+}
+
+function getTimezoneOffsetMinutes() {
+  const match = sqlTimezoneOffset.match(/^([+-])(\d{2}):(\d{2})$/);
+  if (!match) return -180;
+  const sign = match[1] === "-" ? -1 : 1;
+  return sign * (Number(match[2]) * 60 + Number(match[3]));
+}
+
+function formatDateInSqlTimezone(value) {
+  const offsetMinutes = getTimezoneOffsetMinutes();
+  const local = new Date(value.getTime() + offsetMinutes * 60 * 1000);
+  return [
+    local.getUTCFullYear(),
+    "-",
+    String(local.getUTCMonth() + 1).padStart(2, "0"),
+    "-",
+    String(local.getUTCDate()).padStart(2, "0"),
+    "T",
+    String(local.getUTCHours()).padStart(2, "0"),
+    ":",
+    String(local.getUTCMinutes()).padStart(2, "0"),
+    ":",
+    String(local.getUTCSeconds()).padStart(2, "0"),
+    sqlTimezoneOffset,
+  ].join("");
+}
+
+function formatSqlClockFromDate(value) {
   return [
     value.getUTCFullYear(),
     "-",
@@ -868,29 +953,20 @@ function dateToIso(value) {
     String(value.getUTCMinutes()).padStart(2, "0"),
     ":",
     String(value.getUTCSeconds()).padStart(2, "0"),
+    sqlTimezoneOffset,
   ].join("");
 }
 
 function parseLocalIso(value) {
-  return new Date(value);
+  const text = String(value ?? "");
+  if (!text) return new Date(Number.NaN);
+  return new Date(/[zZ]|[+-]\d{2}:\d{2}$/.test(text) ? text : `${text}${sqlTimezoneOffset}`);
 }
 
 function addMinutesToSqlIso(value, minutes) {
   const next = parseLocalIso(value);
-  next.setMinutes(next.getMinutes() + minutes);
-  return [
-    next.getFullYear(),
-    "-",
-    String(next.getMonth() + 1).padStart(2, "0"),
-    "-",
-    String(next.getDate()).padStart(2, "0"),
-    "T",
-    String(next.getHours()).padStart(2, "0"),
-    ":",
-    String(next.getMinutes()).padStart(2, "0"),
-    ":",
-    String(next.getSeconds()).padStart(2, "0"),
-  ].join("");
+  next.setUTCMinutes(next.getUTCMinutes() + Number(minutes ?? 0));
+  return formatDateInSqlTimezone(next);
 }
 
 async function resolveDatabase(database) {
@@ -931,8 +1007,10 @@ function isEngibrasDatabase(database) {
 function getVisibleMappings(sourceMode) {
   const byBaseEntity = new Map();
   for (const mapping of integrationMappings) {
+    if (hiddenBaseEntities.has(mapping.baseEntity)) continue;
     if (mapping.entity === "Bairros" || mapping.entity === "Cidades") continue;
-    if (sourceMode === "senior" && /protheus/i.test(mapping.entity)) continue;
+    if (sourceMode === "senior" && mapping.source === "protheus") continue;
+    if (sourceMode === "protheus" && mapping.source === "senior" && !forcedVisibleBaseEntities.has(mapping.baseEntity)) continue;
     const current = byBaseEntity.get(mapping.baseEntity) ?? [];
     current.push(mapping);
     byBaseEntity.set(mapping.baseEntity, current);
@@ -943,6 +1021,7 @@ function getVisibleMappings(sourceMode) {
 
     if (mappings.length === 1) {
       const [mapping] = mappings;
+      if (forcedVisibleBaseEntities.has(mapping.baseEntity)) return [mapping];
       return mapping.source === "neutral" || mapping.source === sourceMode ? [mapping] : [];
     }
 

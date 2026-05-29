@@ -1,17 +1,47 @@
-import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { Save, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { Badge } from "./Badge";
-import type { IntegrationLog } from "../types";
+import type { AuthUser, IntegrationLog } from "../types";
 import { formatDateTime } from "../utils/format";
 import { statusLabel } from "../utils/metrics";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 type LogDetailDrawerProps = {
   log: IntegrationLog | null;
+  user: AuthUser | null;
+  onUpdateNextiId?: (log: IntegrationLog, nextiId: string) => Promise<void>;
   onClose: () => void;
 };
 
-export function LogDetailDrawer({ log, onClose }: LogDetailDrawerProps) {
+export function LogDetailDrawer({ log, user, onUpdateNextiId, onClose }: LogDetailDrawerProps) {
+  const [nextiId, setNextiId] = useState("");
+  const [message, setMessage] = useState("");
+  const canEditNextiId = user?.role === "admin" && log && (!log.nextiId || log.nextiId === "0");
+
+  useEffect(() => {
+    setNextiId("");
+    setMessage("");
+  }, [log?.id]);
+
   if (!log) return null;
+
+  const submitNextiId = async (event: FormEvent) => {
+    event.preventDefault();
+    setMessage("");
+    const normalized = nextiId.trim();
+    if (!/^\d+$/.test(normalized)) {
+      setMessage("Informe apenas números para o ID Nexti.");
+      return;
+    }
+    try {
+      await onUpdateNextiId?.(log, normalized);
+      setMessage("ID Nexti atualizado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Falha ao atualizar ID Nexti.");
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-40 bg-ink/45 backdrop-blur-sm" role="dialog" aria-modal="true">
@@ -32,7 +62,26 @@ export function LogDetailDrawer({ log, onClose }: LogDetailDrawerProps) {
             <Info label="Banco">{log.client}</Info>
             <Info label="Operação">{log.operation}</Info>
             <Info label="ID origem">{log.sourceId}</Info>
-            <Info label="ID Nexti">{log.nextiId ?? "-"}</Info>
+            <Info label="ID Nexti">
+              <div className="space-y-2">
+                <span>{log.nextiId ?? "-"}</span>
+                {canEditNextiId ? (
+                  <form onSubmit={submitNextiId} className="flex gap-2">
+                    <Input
+                      inputMode="numeric"
+                      value={nextiId}
+                      onChange={(event) => setNextiId(event.target.value)}
+                      placeholder="Inserir ID"
+                      className="h-8 text-xs"
+                    />
+                    <Button type="submit" size="sm" className="h-8 px-2">
+                      <Save size={13} />
+                    </Button>
+                  </form>
+                ) : null}
+                {message ? <p className="text-xs text-muted">{message}</p> : null}
+              </div>
+            </Info>
             <Info label="Tentativas">{log.attempts.length}</Info>
           </div>
 

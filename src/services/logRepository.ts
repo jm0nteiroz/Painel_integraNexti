@@ -12,6 +12,7 @@ export type LogRepository = {
   listRoutines: (database?: string) => Promise<RoutineInfo[]>;
   listStats: (database?: string, filters?: LogFilters) => Promise<DashboardStats>;
   reprocessLog: (database: string, log: IntegrationLog) => Promise<void>;
+  updateNextiId: (database: string, log: IntegrationLog, nextiId: string) => Promise<void>;
   updateRoutineStatus: (database: string, routineId: number, active: boolean) => Promise<void>;
 };
 
@@ -52,6 +53,9 @@ export const mockLogRepository: LogRepository = {
     };
   },
   async reprocessLog() {
+    return undefined;
+  },
+  async updateNextiId() {
     return undefined;
   },
   async updateRoutineStatus() {
@@ -125,6 +129,17 @@ export const apiLogRepository: LogRepository = {
     });
     if (!response.ok) {
       throw new Error("Falha ao solicitar reprocessamento.");
+    }
+  },
+  async updateNextiId(database, log, nextiId) {
+    const response = await fetch(`${apiBaseUrl || ""}/api/logs/nexti-id`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+      body: JSON.stringify({ database, log, nextiId }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.message ?? "Falha ao atualizar ID Nexti.");
     }
   },
   async updateRoutineStatus(database, routineId, active) {

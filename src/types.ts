@@ -26,6 +26,7 @@ export type AuthUser = {
   role: UserRole;
   active: boolean;
   databaseNames: string[];
+  routinePrograms: string[];
   createdAt: string;
   updatedAt: string;
 };

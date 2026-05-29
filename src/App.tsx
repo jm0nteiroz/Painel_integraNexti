@@ -265,6 +265,24 @@ export function App() {
     );
   };
 
+  const updateNextiId = async (log: IntegrationLog, nextiId: string) => {
+    if (!selectedDatabase) return;
+    try {
+      await activeLogRepository.updateNextiId(selectedDatabase, log, nextiId);
+      const [loadedLogs, loadedStats] = await Promise.all([
+        activeLogRepository.listLogs(selectedDatabase),
+        activeLogRepository.listStats(selectedDatabase, filters),
+      ]);
+      setLogs(loadedLogs);
+      setStats(loadedStats);
+      setSelectedLog((current) => current ? { ...current, nextiId, response: { ...current.response, nextiId } } : current);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Falha ao atualizar ID Nexti.");
+      throw error;
+    }
+  };
+
   const onFiltersChange = (nextFilters: LogFilters) => {
     setFilters(nextFilters);
     setPage(1);
@@ -443,7 +461,7 @@ export function App() {
           onStatusChange={updateStatus}
         /> : null}
 
-        {showUsers ? <UserManagementPage databases={databases} /> : null}
+        {showUsers ? <UserManagementPage databases={databases} routines={routines} /> : null}
         {showClients ? <ClientManagementPage databases={databases} /> : null}
         <footer className="pb-4 text-center text-xs text-muted">
           João Pedro Monteiro © 2026. Todos os direitos reservados. | Versão 1.0.0
@@ -451,7 +469,7 @@ export function App() {
 
       </main>
 
-      <LogDetailDrawer log={selectedLog} onClose={() => setSelectedLog(null)} />
+      <LogDetailDrawer log={selectedLog} user={user} onUpdateNextiId={updateNextiId} onClose={() => setSelectedLog(null)} />
       <ZohoSalesIQ enabled={user.role === "client"} />
       </div>
     </div>

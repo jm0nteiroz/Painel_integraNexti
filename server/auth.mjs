@@ -106,6 +106,7 @@ export async function updateUser(id, input) {
     role: input.role ?? current.role,
     active: typeof input.active === "boolean" ? input.active : current.active,
     databaseNames: Array.isArray(input.databaseNames) ? input.databaseNames : current.databaseNames,
+    routinePrograms: Array.isArray(input.routinePrograms) ? input.routinePrograms : current.routinePrograms,
     passwordHash: input.password ? hashPassword(input.password) : current.passwordHash,
     updatedAt: new Date().toISOString(),
   };
@@ -141,6 +142,7 @@ async function makeUser(input) {
     role: input.role,
     active: input.active ?? true,
     databaseNames: input.role === "admin" ? [] : input.databaseNames ?? [],
+    routinePrograms: input.role === "admin" ? [] : input.routinePrograms ?? [],
     createdAt: now,
     updatedAt: now,
   };
@@ -181,6 +183,7 @@ function publicUser(user) {
     role: user.role,
     active: user.active,
     databaseNames: user.databaseNames ?? [],
+    routinePrograms: user.routinePrograms ?? [],
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

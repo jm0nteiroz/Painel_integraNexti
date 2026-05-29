@@ -10,6 +10,7 @@ type UserPayload = {
   role: UserRole;
   active: boolean;
   databaseNames: string[];
+  routinePrograms: string[];
 };
 
 type ClientPayload = {
