@@ -33,6 +33,23 @@ app.use((request, response, next) => {
   next();
 });
 
+app.get("/", (_request, response) => {
+  response.json({
+    ok: true,
+    service: "Painel_integraNexti API",
+    status: "online",
+  });
+});
+
+app.get(["/health", "/api/public-health"], (_request, response) => {
+  response.json({
+    ok: true,
+    service: "Painel_integraNexti API",
+    status: "online",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.post("/api/auth/login", async (request, response) => {
   try {
     const result = await login(request.body?.email, request.body?.password);
