@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, Database, PanelLeft, Percent, RefreshCcw } from "lucide-react";
 import { AppSidebar } from "./components/AppSidebar";
-import { ClientManagementPage } from "./components/ClientManagementPage";
 import { EntitySummaryPanel } from "./components/EntitySummaryPanel";
 import { DateInput, Filters, Select } from "./components/Filters";
 import { LogDetailDrawer } from "./components/LogDetailDrawer";
@@ -165,7 +164,10 @@ export function App() {
       navigate("/logs-integracao");
       return;
     }
-    if (user && ["/usuarios", "/clientes"].includes(currentPath) && user.role !== "admin") {
+    if (user && currentPath === "/clientes") {
+      navigate("/usuarios");
+    }
+    if (user && ["/usuarios"].includes(currentPath) && user.role !== "admin") {
       navigate("/dashboard");
     }
     if (user && currentPath === "/login") {
@@ -294,7 +296,8 @@ export function App() {
   const integrationSourceTitle = selectedDatabaseInfo?.sourceMode === "senior" ? "Senior" : "Protheus";
 
   const navigate = (path: string) => {
-    if (["/usuarios", "/clientes"].includes(path) && user?.role !== "admin") path = "/dashboard";
+    if (path === "/clientes") path = "/usuarios";
+    if (["/usuarios"].includes(path) && user?.role !== "admin") path = "/dashboard";
     if (["/logs-operacoes", "/erros-entidade"].includes(path)) path = "/logs-integracao";
     window.history.pushState(null, "", path);
     setCurrentPath(path);
@@ -319,7 +322,6 @@ export function App() {
   const showLogsIntegration = currentPath === "/logs-integracao";
   const showRoutines = currentPath === "/rotinas-integracao";
   const showUsers = currentPath === "/usuarios" && user.role === "admin";
-  const showClients = currentPath === "/clientes" && user.role === "admin";
   const pageTitle = showDashboard
     ? "Dashboard"
     : showLogsIntegration
@@ -328,14 +330,12 @@ export function App() {
         ? "Informações de Serviço"
         : showUsers
           ? "Gestão de Usuários"
-          : "Cadastro de Clientes";
+          : "Gestão de Usuários";
   const pageSubtitle = showDashboard || showLogsIntegration
     ? `Painel de logs da integração ${integrationSourceTitle} → Nexti`
     : showRoutines
       ? "Acompanhamento das rotinas, intervalos e atrasos da integração."
-      : showUsers
-        ? "Usuários, perfis e permissões de acesso ao painel."
-        : "Clientes cadastrados e bancos vinculados.";
+      : "Usuários, perfis e permissões de acesso ao painel.";
   const dashboardSummary = {
     ...summary,
     lastRun: latestValue(routines
@@ -462,7 +462,6 @@ export function App() {
         /> : null}
 
         {showUsers ? <UserManagementPage databases={databases} routines={routines} /> : null}
-        {showClients ? <ClientManagementPage databases={databases} /> : null}
         <footer className="pb-4 text-center text-xs text-muted">
           João Pedro Monteiro © 2026. Todos os direitos reservados. | Versão 1.0.0
         </footer>

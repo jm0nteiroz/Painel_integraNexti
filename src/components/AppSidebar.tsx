@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Building2, LayoutDashboard, ListTree, ServerCog, Users } from "lucide-react";
+import { LayoutDashboard, ListTree, ServerCog, Users } from "lucide-react";
 import type { AuthUser } from "../types";
 
 const items = [
@@ -7,7 +7,6 @@ const items = [
   { path: "/logs-integracao", label: "Logs da Integração", icon: ListTree, roles: ["admin", "client"], group: "Operação" },
   { path: "/rotinas-integracao", label: "Informações de Serviço", icon: ServerCog, roles: ["admin", "client"], group: "Operação" },
   { path: "/usuarios", label: "Gestão de Usuários", icon: Users, roles: ["admin"], group: "Admin Maxsystem" },
-  { path: "/clientes", label: "Cadastro de Clientes", icon: Building2, roles: ["admin"], group: "Admin Maxsystem" },
 ];
 
 export function AppSidebar({ user, currentPath, onNavigate, collapsed, onToggle }: { user: AuthUser; currentPath: string; onNavigate: (path: string) => void; collapsed: boolean; onToggle: () => void }) {

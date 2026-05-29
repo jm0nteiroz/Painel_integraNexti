@@ -70,7 +70,7 @@ export function EntitySummaryPanel({ title, stats, logs, mode, onView, onStatusC
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
-        {visibleStats.slice(0, 8).map((item) => (
+        {visibleStats.slice(0, showEmpty ? visibleStats.length : 8).map((item) => (
           <article key={item.entity} className="rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2">
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm font-medium text-ink">{item.entity.replace(" - Protheus", "")}</span>

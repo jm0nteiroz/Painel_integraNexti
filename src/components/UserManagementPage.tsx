@@ -23,7 +23,8 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [statusTab, setStatusTab] = useState<"active" | "inactive">("active");
   const [message, setMessage] = useState("");
 
   const load = async () => {
@@ -90,6 +91,8 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
     setShowForm(true);
     setMessage("");
   };
+
+  const filteredUsers = users.filter((user) => statusTab === "active" ? user.active : !user.active);
 
   return (
     <div className="space-y-6">
@@ -195,13 +198,26 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle>Gestão de Usuários</CardTitle>
-            <Button type="button" size="sm" onClick={startCreate}><UserPlus size={14} /> Novo usuário</Button>
+            <div>
+              <CardTitle>Usuários criados</CardTitle>
+              <p className="mt-1 text-xs text-muted">{filteredUsers.length} usuários {statusTab === "active" ? "ativos" : "inativos"}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50/70 p-1">
+                <button type="button" onClick={() => setStatusTab("active")} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${statusTab === "active" ? "bg-emerald-500/15 text-emerald-700" : "text-muted hover:bg-white"}`}>
+                  Ativos
+                </button>
+                <button type="button" onClick={() => setStatusTab("inactive")} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${statusTab === "inactive" ? "bg-rose-500/15 text-rose-700" : "text-muted hover:bg-white"}`}>
+                  Inativos
+                </button>
+              </div>
+              <Button type="button" size="sm" onClick={startCreate}><UserPlus size={14} /> Novo usuário</Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <article key={user.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
                 <div>
                   <p className="font-semibold text-ink">{user.name} <span className="text-xs text-muted">({user.role === "admin" ? "Admin" : "Cliente"})</span></p>
@@ -218,6 +234,11 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
                 </div>
               </article>
             ))}
+            {!filteredUsers.length ? (
+              <p className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-muted">
+                Nenhum usuário {statusTab === "active" ? "ativo" : "inativo"} encontrado.
+              </p>
+            ) : null}
           </div>
         </CardContent>
       </Card>
