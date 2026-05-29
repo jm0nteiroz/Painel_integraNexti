@@ -51,7 +51,7 @@ export function EntitySummaryPanel({ title, stats, logs, mode, onView, onStatusC
         </button> : null}
       </div>
 
-      <div className={`mt-4 grid gap-3 ${showEntityFilter ? "md:grid-cols-[1fr_auto]" : "md:grid-cols-1"}`}>
+      <div className={`mt-4 grid gap-3 ${showEntityFilter ? "md:grid-cols-1" : "hidden"}`}>
         {showEntityFilter ? (
         <label className="text-xs font-medium text-muted">
           Entidade
@@ -63,10 +63,6 @@ export function EntitySummaryPanel({ title, stats, logs, mode, onView, onStatusC
           </select>
         </label>
         ) : null}
-        <label className="flex items-end gap-2 pb-2 text-xs font-medium text-muted">
-          <input type="checkbox" checked={showEmpty} onChange={(event) => setShowEmpty(event.target.checked)} className="size-4 accent-cyan-400" />
-          Exibir entidade vazia
-        </label>
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -82,6 +78,17 @@ export function EntitySummaryPanel({ title, stats, logs, mode, onView, onStatusC
           </article>
         ))}
       </div>
+      {stats.length > 8 || stats.some((item) => item.total === 0) ? (
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShowEmpty((value) => !value)}
+            className="rounded-lg border border-slate-300 bg-white/80 px-4 py-2 text-xs font-semibold text-ink transition hover:border-brand hover:text-brand"
+          >
+            {showEmpty ? "Ver menos" : "Ver mais"}
+          </button>
+        </div>
+      ) : null}
 
       {open ? createPortal(
         <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md">

@@ -1,4 +1,6 @@
 import type { LogFilters } from "../types";
+import { RefreshCcw } from "lucide-react";
+import { Button } from "./ui/button";
 
 type FiltersProps = {
   filters: LogFilters;
@@ -6,14 +8,15 @@ type FiltersProps = {
   statuses: string[];
   statusLabels: Partial<Record<string, string>>;
   onChange: (filters: LogFilters) => void;
+  onRefresh?: () => void;
 };
 
-export function Filters({ filters, entities, statuses, statusLabels, onChange }: FiltersProps) {
+export function Filters({ filters, entities, statuses, statusLabels, onChange, onRefresh }: FiltersProps) {
   const set = (key: keyof LogFilters, value: string) => onChange({ ...filters, [key]: value });
 
   return (
     <section className="rounded-lg border border-sky-100 bg-white/95 p-4 shadow-sm backdrop-blur">
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-[220px_160px_minmax(220px,1fr)_auto] md:items-end">
         <Select label="Entidade" value={filters.entity} options={entities} onChange={(value) => set("entity", value)} />
         <Select label="Status" value={filters.status} options={statuses} optionLabels={statusLabels} onChange={(value) => set("status", value)} />
         <label className="text-xs font-medium text-muted">
@@ -25,6 +28,11 @@ export function Filters({ filters, entities, statuses, statusLabels, onChange }:
             placeholder="Buscar texto"
           />
         </label>
+        {onRefresh ? (
+          <Button type="button" variant="outline" size="sm" className="h-10 w-fit px-3" onClick={onRefresh}>
+            <RefreshCcw size={14} /> Atualizar busca
+          </Button>
+        ) : null}
       </div>
     </section>
   );

@@ -24,7 +24,7 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
-  const [statusTab, setStatusTab] = useState<"active" | "inactive">("active");
+  const [statusTab, setStatusTab] = useState<"all" | "active" | "inactive">("all");
   const [message, setMessage] = useState("");
 
   const load = async () => {
@@ -92,7 +92,7 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
     setMessage("");
   };
 
-  const filteredUsers = users.filter((user) => statusTab === "active" ? user.active : !user.active);
+  const filteredUsers = users.filter((user) => statusTab === "all" ? true : statusTab === "active" ? user.active : !user.active);
 
   return (
     <div className="space-y-6">
@@ -200,10 +200,13 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle>Usuários criados</CardTitle>
-              <p className="mt-1 text-xs text-muted">{filteredUsers.length} usuários {statusTab === "active" ? "ativos" : "inativos"}</p>
+              <p className="mt-1 text-xs text-muted">{filteredUsers.length} usuários {statusTab === "all" ? "cadastrados" : statusTab === "active" ? "ativos" : "inativos"}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50/70 p-1">
+                <button type="button" onClick={() => setStatusTab("all")} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${statusTab === "all" ? "bg-brand/15 text-brand" : "text-muted hover:bg-white"}`}>
+                  Todos
+                </button>
                 <button type="button" onClick={() => setStatusTab("active")} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${statusTab === "active" ? "bg-emerald-500/15 text-emerald-700" : "text-muted hover:bg-white"}`}>
                   Ativos
                 </button>
@@ -236,7 +239,7 @@ export function UserManagementPage({ databases, routines }: { databases: Databas
             ))}
             {!filteredUsers.length ? (
               <p className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-muted">
-                Nenhum usuário {statusTab === "active" ? "ativo" : "inativo"} encontrado.
+                Nenhum usuário {statusTab === "all" ? "cadastrado" : statusTab === "active" ? "ativo" : "inativo"} encontrado.
               </p>
             ) : null}
           </div>

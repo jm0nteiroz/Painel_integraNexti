@@ -524,11 +524,12 @@ setInterval(() => {}, 1 << 30);
 
 async function fetchIntegrationRows(pool, mapping, limit, database) {
   const actionStatusColumn = await findActionStatusColumn(pool, mapping);
-  const mapped = { ...mapping, actionStatusColumn };
-  const orderExpression = mapping.dateColumns.length
-    ? mapping.dateColumns.length === 1
-      ? `[${mapping.dateColumns[0]}] desc`
-      : `coalesce(${mapping.dateColumns.map((column) => `[${column}]`).join(", ")}) desc`
+  const dateColumns = await findDateColumns(pool, mapping);
+  const mapped = { ...mapping, actionStatusColumn, dateColumns };
+  const orderExpression = dateColumns.length
+    ? dateColumns.length === 1
+      ? `[${dateColumns[0]}] desc`
+      : `coalesce(${dateColumns.map((column) => `[${column}]`).join(", ")}) desc`
     : "1 desc";
 
   const result = await pool.request()
@@ -540,7 +541,9 @@ async function fetchIntegrationRows(pool, mapping, limit, database) {
 
 async function fetchEntityStats(pool, mapping, query) {
   const actionStatusColumn = await findActionStatusColumn(pool, mapping);
-  const dateExpression = buildDateExpression(mapping);
+  const dateColumns = await findDateColumns(pool, mapping);
+  const mapped = { ...mapping, dateColumns };
+  const dateExpression = buildDateExpression(mapped);
   const dateWhere = buildStatsDateWhere(dateExpression, query);
   const actionExpression = actionStatusColumn
     ? `upper(nullif(ltrim(rtrim(convert(nvarchar(max), [${actionStatusColumn}]))), ''))`
@@ -696,12 +699,32 @@ async function findActionStatusColumn(pool, mapping) {
     ?? null;
 }
 
+async function findDateColumns(pool, mapping) {
+  const [schema, table] = mapping.table.replaceAll("[", "").replaceAll("]", "").split(".");
+  const result = await pool.request()
+    .input("schema", sql.NVarChar, schema)
+    .input("table", sql.NVarChar, table)
+    .query(`
+      select c.name as columnName
+      from sys.columns c
+      inner join sys.tables t on t.object_id = c.object_id
+      inner join sys.schemas s on s.schema_id = t.schema_id
+      where s.name = @schema
+        and t.name = @table
+        and c.name like '%DataAcaoPend%'
+      order by c.column_id
+    `);
+  const dynamicColumns = result.recordset.map((row) => row.columnName);
+  return dynamicColumns.length ? dynamicColumns : mapping.dateColumns;
+}
+
 function normalizeIntegrationRow(mapping, row, index) {
   const errorMessage = formatReturnMessage(row[mapping.errorColumn]);
   const nextiId = cleanValue(row[mapping.nextiColumn]);
   const actionError = cleanValue(row[mapping.actionErrorColumn]);
   const actionStatus = cleanValue(row[mapping.actionStatusColumn]);
   const statusText = cleanValue(row[mapping.statusColumn]);
+  const externalKey = getExternalIdValue(row);
   const sourceKey = getFirstValue(row, mapping.sourceColumns);
   const sourceId = sourceKey?.value ?? `${mapping.table}-${index + 1}`;
   const date = getFirstDate(row, mapping.dateColumns) ?? "1970-01-01T00:00:00.000Z";
@@ -746,6 +769,8 @@ function normalizeIntegrationRow(mapping, row, index) {
       sourceTable: mapping.table,
       sourceColumn: sourceKey?.column ?? null,
       sourceId,
+      externalIdColumn: externalKey?.column ?? null,
+      externalId: externalKey?.value ?? null,
       errorColumn: mapping.errorColumn,
       actionErrorColumn: mapping.actionErrorColumn,
       actionStatusColumn: mapping.actionStatusColumn,
@@ -758,6 +783,15 @@ function normalizeIntegrationRow(mapping, row, index) {
       error: errorMessage,
     },
   };
+}
+
+function getExternalIdValue(row) {
+  const columns = Object.keys(row).filter((column) => /externalid|external_id|_exid$/i.test(column));
+  for (const column of columns) {
+    const value = cleanValue(row[column]);
+    if (value) return { column, value };
+  }
+  return null;
 }
 
 function getFirstValue(row, columns) {

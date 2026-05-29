@@ -38,10 +38,10 @@ export function LogTable({ logs, page, pageSize, onPageChange, onView, onStatusC
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="data-table min-w-[900px] w-full text-left text-sm">
+        <table className="data-table min-w-[1040px] w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-muted">
             <tr>
-              {["Data", "Entidade/Tabela", "ID origem", "ID Nexti", "Ação pendência", "Erro", "Status tratado", "Ações"].map((column) => (
+              {["Data recebimento", "Entidade/Tabela", "External ID", "ID origem", "ID Nexti", "Ação pendência", "Erro", "Status tratado", "Ações"].map((column) => (
                 <th key={column} className="px-5 py-4 font-semibold">{column}</th>
               ))}
             </tr>
@@ -51,6 +51,7 @@ export function LogTable({ logs, page, pageSize, onPageChange, onView, onStatusC
               <tr key={log.id} className="hover:bg-slate-50/70">
                 <td className="px-5 py-4 text-muted">{formatDateTime(log.date)}</td>
                 <td className="px-5 py-4 text-muted">{log.entity}</td>
+                <td className="px-5 py-4 font-mono text-xs text-muted">{String(log.payload.externalId ?? "-")}</td>
                 <td className="px-5 py-4 font-mono text-xs text-muted">{log.sourceId}</td>
                 <td className="px-5 py-4 font-mono text-xs text-muted">{log.nextiId ?? "-"}</td>
                 <td className="px-5 py-4 font-mono text-xs text-muted">{String(log.payload.actionStatus ?? "-")}</td>

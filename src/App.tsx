@@ -323,7 +323,7 @@ export function App() {
   const showRoutines = currentPath === "/rotinas-integracao";
   const showUsers = currentPath === "/usuarios" && user.role === "admin";
   const pageTitle = showDashboard
-    ? "Dashboard"
+    ? "Dashboard IntegraNexti"
     : showLogsIntegration
       ? "Logs da Integração"
       : showRoutines
@@ -332,7 +332,9 @@ export function App() {
           ? "Gestão de Usuários"
           : "Gestão de Usuários";
   const pageSubtitle = showDashboard || showLogsIntegration
-    ? `Painel de logs da integração ${integrationSourceTitle} → Nexti`
+    ? showDashboard
+      ? `Visão consolidada da integração ${integrationSourceTitle} → Nexti`
+      : `Painel de logs da integração ${integrationSourceTitle} → Nexti`
     : showRoutines
       ? "Acompanhamento das rotinas, intervalos e atrasos da integração."
       : "Usuários, perfis e permissões de acesso ao painel.";
@@ -344,6 +346,14 @@ export function App() {
       .sort()) ?? summary.lastRun,
   };
   const currentSummary = dashboardSummary;
+  const activeRoutineCount = routines.filter((routine) => routine.active).length;
+  const routineStatus = routines.length === 0
+    ? "warning"
+    : activeRoutineCount === routines.length
+      ? "ok"
+      : activeRoutineCount <= routines.length / 2
+        ? "critical"
+        : "warning";
 
   return (
     <div className="relative min-h-screen bg-surface">
@@ -393,8 +403,8 @@ export function App() {
             {loadError}
           </section>
         ) : null}
-        {(showDashboard || showLogsIntegration) ? <section className="rounded-lg border border-slate-800 bg-white/5 p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-[180px_180px_180px_auto] md:items-end md:justify-start">
+        {(showDashboard || showLogsIntegration) ? <section className="rounded-lg border border-slate-800 bg-white/5 p-3 shadow-sm">
+          <div className="flex flex-wrap items-end gap-3">
             <Select label="Período" value={filters.period} options={["24h", "7d", "30d", "custom"]} optionLabels={{ "24h": "24 horas", "7d": "7 dias", "30d": "30 dias", custom: "Personalizado" }} onChange={(value) => setFilter("period", value)} />
             {filters.period === "custom" ? (
               <>
@@ -402,14 +412,26 @@ export function App() {
                 <DateInput label="Data final" value={filters.dateTo} onChange={(value) => setFilter("dateTo", value)} />
               </>
             ) : (
-              <>
-                <div className="hidden md:block" />
-                <div className="hidden md:block" />
-              </>
+              null
             )}
             <button type="button" onClick={refreshAll} className="inline-flex h-9 w-fit items-center justify-center gap-2 rounded-lg border border-slate-700 bg-white/5 px-3 text-xs font-semibold text-slate-100 transition hover:bg-white/10">
               <RefreshCcw size={14} /> Atualizar métricas
             </button>
+          </div>
+        </section> : null}
+
+        {showDashboard ? <section className={`rounded-lg border p-4 shadow-sm ${routineStatus === "ok" ? "border-emerald-400/40 bg-emerald-400/10" : routineStatus === "critical" ? "border-rose-400/40 bg-rose-400/10" : "border-amber-400/40 bg-amber-400/10"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className={`size-3 rounded-full ${routineStatus === "ok" ? "bg-emerald-400" : routineStatus === "critical" ? "bg-rose-400" : "bg-amber-400"}`} />
+              <div>
+                <h2 className="text-sm font-semibold text-ink">Rotinas ativas</h2>
+                <p className="text-xs text-muted">{formatNumber(activeRoutineCount)} de {formatNumber(routines.length)} rotinas liberadas estão ativas.</p>
+              </div>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-ink">
+              {routineStatus === "ok" ? "Tudo ativo" : routineStatus === "critical" ? "Mais da metade desativada" : "Atenção"}
+            </span>
           </div>
         </section> : null}
 
@@ -439,16 +461,13 @@ export function App() {
         /> : null}
 
         {showLogsIntegration ? <div className="space-y-4">
-          <Filters filters={filters} entities={options.entities} statuses={["success", "pending", "error"]} statusLabels={statusLabel} onChange={onFiltersChange} />
+          <Filters filters={filters} entities={options.entities} statuses={["success", "pending", "error"]} statusLabels={statusLabel} onChange={onFiltersChange} onRefresh={refreshAll} />
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard title="Dados totais" value={formatNumber(filteredLogsSummary.totalReceived)} detail="Registros filtrados" icon={Database} />
             <MetricCard title="Dados concluídos" value={formatNumber(filteredLogsSummary.success)} detail="Concluídos na busca" icon={CheckCircle2} />
             <MetricCard title="Dados pendentes" value={formatNumber(filteredLogsSummary.pending)} detail="Pendentes na busca" icon={Clock3} />
             <MetricCard title="Dados erros" value={formatNumber(filteredLogsSummary.error)} detail="Erros na busca" icon={AlertTriangle} />
           </section>
-          <button type="button" onClick={refreshAll} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-700 bg-white/5 px-3 text-xs font-semibold text-slate-100 transition hover:bg-white/10">
-            <RefreshCcw size={14} /> Atualizar busca
-          </button>
         </div> : null}
 
         {showLogsIntegration ? <LogTable
@@ -463,7 +482,7 @@ export function App() {
 
         {showUsers ? <UserManagementPage databases={databases} routines={routines} /> : null}
         <footer className="pb-4 text-center text-xs text-muted">
-          João Pedro Monteiro © 2026. Todos os direitos reservados. | Versão 1.0.0
+          Maxsystem © 2026. Todos os direitos reservados. | Versão 1.0.0
         </footer>
 
       </main>
