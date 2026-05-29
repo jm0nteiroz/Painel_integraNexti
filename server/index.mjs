@@ -22,10 +22,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN ?? "")
 app.use(express.json());
 app.use((request, response, next) => {
   const requestOrigin = request.headers.origin;
-  const allowAnyOrigin = allowedOrigins.length === 0;
-  const allowedOrigin = allowAnyOrigin || (requestOrigin && allowedOrigins.includes(requestOrigin))
-    ? requestOrigin
-    : allowedOrigins[0];
+  const allowedOrigin = resolveAllowedOrigin(requestOrigin);
   response.setHeader("Access-Control-Allow-Origin", allowedOrigin ?? "*");
   response.setHeader("Vary", "Origin");
   response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -36,6 +33,15 @@ app.use((request, response, next) => {
   }
   next();
 });
+
+function resolveAllowedOrigin(requestOrigin) {
+  if (!requestOrigin) return allowedOrigins[0] ?? "*";
+  if (allowedOrigins.length === 0 || allowedOrigins.includes(requestOrigin)) return requestOrigin;
+  if (/^https:\/\/painel-integra-nexti(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(requestOrigin)) {
+    return requestOrigin;
+  }
+  return allowedOrigins[0];
+}
 
 app.get("/", (_request, response) => {
   response.json({
