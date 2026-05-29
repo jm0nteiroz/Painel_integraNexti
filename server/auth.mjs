@@ -4,20 +4,35 @@ import path from "node:path";
 
 const storePath = path.resolve("server/auth-store.json");
 const sessions = new Map();
+const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, "");
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAuthStoreTable = process.env.SUPABASE_AUTH_STORE_TABLE ?? "integranexti_auth_store";
 
 export async function ensureAuthStore() {
+  const existing = await readStoreRaw();
+  if (existing) return;
+
+  const password = process.env.ADMIN_INITIAL_PASSWORD ?? "Teste123@";
+  const admin = await makeUser({
+    name: "Admin Maxsystem",
+    email: process.env.ADMIN_EMAIL ?? "admin@maxsystem.com.br",
+    password,
+    role: "admin",
+    databaseNames: [],
+  });
+  await writeStore({ users: [admin], clients: [] });
+}
+
+async function readStoreRaw() {
+  if (isSupabaseAuthStoreEnabled()) {
+    return readSupabaseStore();
+  }
+
   try {
     await fs.access(storePath);
+    return JSON.parse(await fs.readFile(storePath, "utf-8"));
   } catch {
-    const password = process.env.ADMIN_INITIAL_PASSWORD ?? "Teste123@";
-    const admin = await makeUser({
-      name: "Admin Maxsystem",
-      email: process.env.ADMIN_EMAIL ?? "admin@maxsystem.com.br",
-      password,
-      role: "admin",
-      databaseNames: [],
-    });
-    await writeStore({ users: [admin], clients: [] });
+    return null;
   }
 }
 
@@ -121,15 +136,66 @@ export function canAccessDatabase(user, database) {
 }
 
 async function readStore() {
-  await ensureAuthStore();
-  const store = JSON.parse(await fs.readFile(storePath, "utf-8"));
+  let store = await readStoreRaw();
+  if (!store) {
+    await ensureAuthStore();
+    store = await readStoreRaw();
+  }
+  if (!store) throw new Error("Store de autenticação indisponível.");
   if (!Array.isArray(store.clients)) store.clients = [];
   return store;
 }
 
 async function writeStore(store) {
+  if (isSupabaseAuthStoreEnabled()) {
+    await writeSupabaseStore(store);
+    return;
+  }
+
   await fs.mkdir(path.dirname(storePath), { recursive: true });
   await fs.writeFile(storePath, JSON.stringify(store, null, 2));
+}
+
+function isSupabaseAuthStoreEnabled() {
+  return Boolean(supabaseUrl && supabaseServiceRoleKey);
+}
+
+function supabaseHeaders(extra = {}) {
+  return {
+    apikey: supabaseServiceRoleKey,
+    Authorization: `Bearer ${supabaseServiceRoleKey}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
+
+async function readSupabaseStore() {
+  const response = await fetch(`${supabaseUrl}/rest/v1/${supabaseAuthStoreTable}?id=eq.default&select=data&limit=1`, {
+    headers: supabaseHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha ao ler usuários no Supabase: ${response.status}`);
+  }
+
+  const rows = await response.json();
+  return rows[0]?.data ?? null;
+}
+
+async function writeSupabaseStore(store) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/${supabaseAuthStoreTable}?on_conflict=id`, {
+    method: "POST",
+    headers: supabaseHeaders({ Prefer: "resolution=merge-duplicates" }),
+    body: JSON.stringify({
+      id: "default",
+      data: store,
+      updated_at: new Date().toISOString(),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha ao gravar usuários no Supabase: ${response.status}`);
+  }
 }
 
 async function makeUser(input) {

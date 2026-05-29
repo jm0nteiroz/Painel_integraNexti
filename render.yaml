@@ -29,3 +29,11 @@ services:
         value: admin@maxsystem.com.br
       - key: ADMIN_INITIAL_PASSWORD
         sync: false
+      - key: API_CACHE_TTL_SECONDS
+        value: "60"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_AUTH_STORE_TABLE
+        value: integranexti_auth_store

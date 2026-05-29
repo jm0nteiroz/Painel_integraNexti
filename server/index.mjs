@@ -11,6 +11,8 @@ await ensureAuthStore();
 const sqlTimezoneOffset = process.env.SQL_TIMEZONE_OFFSET ?? "-03:00";
 const forcedVisibleBaseEntities = new Set(["Cargos", "Sindicatos", "Unidade Negócio"]);
 const hiddenBaseEntities = new Set(["Horários Escala", "Marcação Horários"]);
+const apiCacheTtlMs = Number(process.env.API_CACHE_TTL_SECONDS ?? 60) * 1000;
+const apiCache = new Map();
 
 const app = express();
 const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
@@ -155,6 +157,7 @@ app.get("/api/health", async (_request, response) => {
 
 app.get("/api/databases", async (_request, response) => {
   try {
+    response.json(await getCached(_request, "databases", async () => {
     const pool = await getPool();
     const result = await pool.request().query(`
       select name
@@ -171,7 +174,8 @@ app.get("/api/databases", async (_request, response) => {
         isEngibras: isEngibrasDatabase(name),
       };
     }));
-    response.json(databases);
+    return databases;
+    }));
   } catch (error) {
     sendError(response, error);
   }
@@ -194,6 +198,7 @@ app.get("/api/operations", async (request, response) => {
 
 app.get("/api/entities", async (request, response) => {
   try {
+    response.json(await getCached(request, "entities", async () => {
     const database = await resolveDatabase(request.query.database);
     assertDatabaseAccess(request.user, database);
     const sourceMode = await getSourceMode(database);
@@ -212,7 +217,8 @@ app.get("/api/entities", async (request, response) => {
         }))
       : [];
 
-    response.json(uniqueEntities([...mappedEntities, ...operationEntities]));
+    return uniqueEntities([...mappedEntities, ...operationEntities]);
+    }));
   } catch (error) {
     sendError(response, error);
   }
@@ -220,13 +226,13 @@ app.get("/api/entities", async (request, response) => {
 
 app.get("/api/routines", async (request, response) => {
   try {
+    response.json(await getCached(request, "routines", async () => {
     const database = await resolveDatabase(request.query.database);
     assertDatabaseAccess(request.user, database);
     const pool = await getPoolForDatabase(database);
     const hasTable = await pool.request().query("select object_id('dbo.configuracao_rotinas') as id");
     if (!hasTable.recordset[0]?.id) {
-      response.json([]);
-      return;
+      return [];
     }
     const lastRunByProgram = await fetchRoutineCallTimes(pool);
 
@@ -252,9 +258,10 @@ app.get("/api/routines", async (request, response) => {
       ? new Set((request.user.routinePrograms ?? []).map(normalizeRoutineKey).filter(Boolean))
       : null;
 
-    response.json(allowedRoutinePrograms?.size
+    return allowedRoutinePrograms?.size
       ? normalizedRoutines.filter((routine) => allowedRoutinePrograms.has(normalizeRoutineKey(routine.program)))
-      : normalizedRoutines);
+      : normalizedRoutines;
+    }));
   } catch (error) {
     sendError(response, error);
   }
@@ -274,6 +281,7 @@ app.put("/api/routines/:id/status", async (request, response) => {
         set confrot_Status = @status
         where confrot_id = @id
       `);
+    clearApiCache();
     response.json({ ok: true, affectedRows: result.rowsAffected?.[0] ?? 0 });
   } catch (error) {
     sendError(response, error);
@@ -282,6 +290,7 @@ app.put("/api/routines/:id/status", async (request, response) => {
 
 app.get("/api/stats", async (request, response) => {
   try {
+    response.json(await getCached(request, "stats", async () => {
     const database = await resolveDatabase(request.query.database);
     assertDatabaseAccess(request.user, database);
     const sourceMode = await getSourceMode(database);
@@ -299,7 +308,7 @@ app.get("/api/stats", async (request, response) => {
       .sort()
       .at(-1) ?? null;
 
-    response.json({
+    return {
       totalReceived,
       processed,
       success,
@@ -308,7 +317,8 @@ app.get("/api/stats", async (request, response) => {
       successRate: totalReceived ? success / totalReceived : 0,
       lastRun,
       byEntity: stats.map(({ lastRun: _lastRun, ...item }) => item),
-    });
+    };
+    }));
   } catch (error) {
     sendError(response, error);
   }
@@ -316,6 +326,7 @@ app.get("/api/stats", async (request, response) => {
 
 app.get("/api/logs", async (request, response) => {
   try {
+    response.json(await getCached(request, "logs", async () => {
     const limitPerEntity = Math.min(Number(request.query.limitPerEntity ?? 50000), 50000);
     const database = await resolveDatabase(request.query.database);
     assertDatabaseAccess(request.user, database);
@@ -329,7 +340,8 @@ app.get("/api/logs", async (request, response) => {
       .flat()
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    response.json(logs);
+    return logs;
+    }));
   } catch (error) {
     sendError(response, error);
   }
@@ -372,6 +384,7 @@ app.post("/api/logs/reprocess", async (request, response) => {
         where convert(nvarchar(max), [${sourceColumn}]) = @sourceId
       `);
 
+    clearApiCache();
     response.json({ ok: true, affectedRows: result.rowsAffected?.[0] ?? 0 });
   } catch (error) {
     sendError(response, error);
@@ -415,6 +428,7 @@ app.put("/api/logs/nexti-id", requireAdmin, async (request, response) => {
         where convert(nvarchar(max), [${sourceColumn}]) = @sourceId
       `);
 
+    clearApiCache();
     response.json({ ok: true, affectedRows: result.rowsAffected?.[0] ?? 0 });
   } catch (error) {
     sendError(response, error);
@@ -423,6 +437,7 @@ app.put("/api/logs/nexti-id", requireAdmin, async (request, response) => {
 
 app.get("/api/executions", async (_request, response) => {
   try {
+    response.json(await getCached(_request, "executions", async () => {
     const database = await resolveDatabase(_request.query.database);
     assertDatabaseAccess(_request.user, database);
     const sourceMode = await getSourceMode(database);
@@ -436,7 +451,7 @@ app.get("/api/executions", async (_request, response) => {
     const totalError = logs.filter((log) => log.status === "error").length;
     const totalPending = logs.filter((log) => log.status === "pending").length;
 
-    response.json([
+    return [
       {
         id: "db-current-snapshot",
         startedAt: new Date().toISOString(),
@@ -449,7 +464,8 @@ app.get("/api/executions", async (_request, response) => {
         totalError,
         totalPending,
       },
-    ]);
+    ];
+    }));
   } catch (error) {
     sendError(response, error);
   }
@@ -515,6 +531,20 @@ function assertDatabaseAccess(user, database) {
     error.statusCode = 403;
     throw error;
   }
+}
+
+async function getCached(request, namespace, loader) {
+  if (apiCacheTtlMs <= 0) return loader();
+  const key = `${namespace}:${request.user?.id ?? "anon"}:${JSON.stringify(request.query ?? {})}`;
+  const cached = apiCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const value = await loader();
+  apiCache.set(key, { value, expiresAt: Date.now() + apiCacheTtlMs });
+  return value;
+}
+
+function clearApiCache() {
+  apiCache.clear();
 }
 
 app.listen(port, () => {

@@ -72,6 +72,10 @@ DB_TRUST_SERVER_CERTIFICATE=true
 CORS_ORIGIN=https://url-do-painel-na-vercel.vercel.app
 ADMIN_EMAIL=admin@maxsystem.com.br
 ADMIN_INITIAL_PASSWORD=senha-inicial-segura
+API_CACHE_TTL_SECONDS=60
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+SUPABASE_AUTH_STORE_TABLE=integranexti_auth_store
 ```
 
 O Render define a variável `PORT` automaticamente. A API usa `PORT` em produção e `API_PORT` somente para desenvolvimento local.
@@ -99,12 +103,53 @@ VITE_API_BASE_URL=https://sua-api.onrender.com
 VITE_USE_MOCKS=false
 ```
 
-Login inicial de desenvolvimento:
+O projeto possui `vercel.json` com rewrite para SPA. Isso permite abrir direto `/dashboard`,
+`/logs-integracao` ou qualquer rota interna sem cair no 404 da Vercel; se não houver sessão,
+o próprio app redireciona para `/login`.
+
+Login inicial:
 
 - Email: `admin@maxsystem.com.br`
 - Senha inicial: configurada no backend por `ADMIN_INITIAL_PASSWORD`; se a variável não existir, o seed local usa `Teste123@`.
 
-O arquivo `server/auth-store.json` é criado localmente com hashes de senha e não deve ser versionado.
+Em produção, configure Supabase para não perder usuários a cada deploy. Localmente, se Supabase
+não estiver configurado, o arquivo `server/auth-store.json` é usado como fallback com hashes de senha
+e não deve ser versionado.
+
+## Persistência de usuários no Supabase
+
+Crie uma tabela no Supabase usando o SQL em `supabase/auth_store.sql`:
+
+```sql
+create table if not exists public.integranexti_auth_store (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.integranexti_auth_store enable row level security;
+```
+
+Depois, no Render, configure:
+
+```env
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+SUPABASE_AUTH_STORE_TABLE=integranexti_auth_store
+```
+
+A chave `service_role` fica somente no backend Render. Não coloque essa chave no Vercel nem em variável `VITE_`.
+Com isso, usuários, clientes e permissões deixam de ser perdidos em novos deploys.
+
+## Cache das consultas
+
+A API mantém cache em memória para consultas pesadas ao SQL Server por alguns segundos. O padrão é 60 segundos:
+
+```env
+API_CACHE_TTL_SECONDS=60
+```
+
+Ao reprocessar registros, alterar ID Nexti ou ativar/desativar rotinas, o cache é limpo automaticamente.
 
 ## Estrutura
 
